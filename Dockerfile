@@ -11,7 +11,7 @@ RUN  apt-get update -y && \
      apt-get -y autoremove && \
      apt-get clean
 
-RUN apt-get install -y git
+RUN apt-get install -y curl git gnupg zip unzip
 
 # Set working directory
 WORKDIR /deepmind-lab
@@ -19,20 +19,15 @@ WORKDIR /deepmind-lab
 #
 # Install Bazel
 #
+RUN echo "deb [arch=amd64] https://storage.googleapis.com/bazel-apt stable jdk1.8" | tee /etc/apt/sources.list.d/bazel.list \
+  && curl https://bazel.build/bazel-release.pub.gpg | apt-key add -
 
-# Install packages required by Bazel
-RUN apt-get install -y g++ unzip zip
+RUN apt-get update \
+  && apt-get install -y bazel \
+  && rm -rf /var/lib/apt/lists/*
 
 # Install JDK
 # RUN apt-get install -y openjdk-11-jdk
-
-# Copy and run binary installer
-ENV bazel_installer bazel-3.0.0-installer-linux-x86_64.sh
-COPY /${bazel_installer} . 
-
-RUN chmod +x ${bazel_installer}
-RUN ./${bazel_installer} --user
-RUN echo 'export PATH="$PATH:$HOME/bin"' >> ~/.bashrc
 
 #
 # Install DeepMind Lab
@@ -48,6 +43,6 @@ RUN apt-get install -y \
 RUN git clone https://github.com/deepmind/lab.git
 
 WORKDIR /deepmind-lab/lab
-RUN bazel build -c opt //:deepmind_lab.so
+
 
 
